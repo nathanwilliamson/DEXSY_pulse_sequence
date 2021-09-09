@@ -1,0 +1,129 @@
+procedure(DEXSY_diagonalSlice_SEdec_interleaveBD)
+    
+# Cache macros
+   cd("$appdir$\\Macros\\NMR-MOUSE")
+   cachemacro("DEXSY_singlescan_2.mac","local")
+
+   cachemacro("SEdec.mac","local")
+
+   cd("$appdir$\\Macros\\Kea-Core")
+   cachemacro("keaCtrl.mac","local")
+   cachemacro("keaRun.mac","local")
+   cachemacro("keaPlot.mac","local")
+   cachemacro("keaFiles.mac","local")
+   cacheproc("true")
+
+# Set up gui par
+   
+   guipar = ["90Amplitude = -22",
+             "180Amplitude = -16",
+             "accumulate = \"yes\"",
+             "acqTime = 0.004",
+             "b1Freq = 13.79d",
+             "bandwidth = 2e+003",
+             "dataDirectory = \"C:\\Users\\aabai\\Application Data\\Prospa\\Preferences V3.2\\Data\"",
+             "dwellTime = 0.5",
+             "echoShift = -1",
+             "echoTime = 25",
+             "expName = \"test_se\"",
+             "expNr = 1",
+             "flatFilter = \"no\"",
+             "gradient = 650",
+             "incExpNr = \"yes\"",
+             "MixingTime = 10",
+             "nrEchoes = 2000",
+             "nrPnts = 8",
+             "nrScans = 8",
+             "pulseLength = 2",
+             "repTime = 2000",
+             "rxGain = 25",
+             "rxPhase = 223",
+             "saveData = \"true\"",
+             "tau1 = .2",
+             "tau2 = .2",
+             "usePhaseCycle = \"yes\""]
+
+ guiparSEdec = ["90Amplitude = -22",
+             "180Amplitude = -16",
+             "accumulate = \"yes\"",
+             "acqTime = 0.004",
+             "b1Freq = 13.79d",
+             "bandwidth = 2e+003",
+             "dataDirectory = \"C:\\Users\\aabai\\Documents\\Mouse\\Data\\DEXSY_baiRF\\DEXSY_diagonalSliceBD\"",
+             "DEst = .25",
+             "dwellTime = 0.5",
+             "echoShift = -1",
+             "echoTime = 25",
+             "expName = \"sedecBD\"",
+             "expNr = 1",
+             "flatFilter = \"no\"",
+             "gradient = 650",
+             "incExpNr = \"yes\"",
+             "index = \"lin\"",
+             "nrEchoes = 2000",
+             "nrPnts = 8",
+             "nrPntsTau = 43",
+             "nrScans = 4",
+             "pulseLength = 2",
+             "repTime = 2000",
+             "rxGain = 25",
+             "rxPhase = 223",
+             "saveData = \"true\"",
+             "tauMax = 6.55",
+             "tauMin = 0.05",
+             "usePhaseCycle = \"yes\""]
+
+
+# Run the macro via the backdoor
+
+MixingTimelist=[0.2,4,20]
+
+nMixingTime=size(MixingTimelist)
+
+
+taulist1=[0.2,0.2,0.593,0.735]  #new tauMin=0.2 ms, bmin= 0.089 s/mm2  #point near bs=0, then 3 pts at bs=4.5E9
+taulist2=[0.213,0.735,0.581,0.2]
+
+ntau=size(taulist1)
+#Dummy Scans
+      guipar = setlistvalue(guipar,"saveData", "\"false\"")
+      DEXSY_singlescan:backdoor(guipar)
+      guipar = setlistvalue(guipar,"saveData", "\"true\"")
+for(kii=0 to 10000)
+
+ #(winVariables,parameters,filterCoef,pulseProg,tables) = keaRun:saveKeaState(guipar)
+
+      guiparSEdec = setlistvalue(guiparSEdec,"expNr","$kii+1$")
+
+         SEdec:backdoor(guiparSEdec)
+
+ # keaRun:restoreKeaState(winVariables,parameters,filterCoef,pulseProg,tables,guipar)
+
+for(ki=0 to 14)
+k=kii*15+ki #change *X to length of ki list
+#for(m=0 to 1)
+m=0
+      guipar = setlistvalue(guipar,"expName","\"bs$m+1$\"")
+
+for(t=0 to nMixingTime-1)
+
+      guipar = setlistvalue(guipar,"dataDirectory", "\"C:\\Users\\aabai\\Documents\\Mouse\\Data\\DEXSY_baiRF\\DEXSY_diagonalSliceBD\\set$k+1$\\MixingTime$MixingTimelist[t]$\"")
+      guipar = setlistvalue(guipar,"MixingTime","$MixingTimelist[t]$")
+for(n=0 to ntau-1)
+
+      guipar = setlistvalue(guipar,"tau1", "$taulist1[n]$")
+      guipar = setlistvalue(guipar,"tau2", "$taulist2[n]$")
+      guipar = setlistvalue(guipar,"expNr","$n+1$")
+
+   DEXSY_singlescan_2:backdoor(guipar)
+
+next(n)
+next(t)
+#next(m)
+next(ki)
+
+
+
+
+next(kii)
+endproc()
